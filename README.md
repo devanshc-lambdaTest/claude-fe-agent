@@ -23,16 +23,31 @@ cd claude-fe-agent
 ./setup.sh
 ```
 
-### 2. Configure Your Tools
+### 2. One-Time MCP Authentication
+
+MCP servers are pre-configured. You only need to authenticate **once** and tokens persist forever (auto-refresh):
 
 ```bash
 # Start Claude Code
 claude
 
-# Authenticate MCP servers
+# Authenticate MCP servers (ONE TIME ONLY)
 /mcp
-# Follow OAuth for Atlassian, Figma, GitHub
+
+# You'll see:
+# - atlassian: Click to authenticate with Jira/Confluence
+# - figma: Click to authenticate with Figma
+#
+# After authenticating, tokens are stored in ~/.claude/.credentials.json
+# and auto-refresh - you'll never need to authenticate again!
 ```
+
+**What happens after authentication:**
+- Tokens stored securely in `~/.claude/.credentials.json`
+- Tokens auto-refresh before expiry
+- Works across ALL projects (user-level config)
+- Persists across machine restarts
+- Syncs if you backup `~/.claude/.credentials.json`
 
 ### 3. Remember Your First Project
 
@@ -207,6 +222,52 @@ git pull
 3. Share the repository
 4. Each team member runs `./setup.sh`
 
+## MCP Authentication Details
+
+### How It Works
+
+```
+First time setup:
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  /mcp       │ ──▶ │  OAuth      │ ──▶ │  Tokens     │
+│             │     │  (browser)  │     │  saved      │
+└─────────────┘     └─────────────┘     └─────────────┘
+
+Every subsequent session:
+┌─────────────┐     ┌─────────────┐
+│  Start      │ ──▶ │  Tokens     │ ──▶ MCP Ready!
+│  claude     │     │  auto-load  │
+└─────────────┘     └─────────────┘
+```
+
+### Token Storage
+
+| File | Contents | Sensitive? |
+|------|----------|------------|
+| `~/.claude/.credentials.json` | OAuth tokens | Yes - never commit! |
+| `~/.claude/settings.json` | MCP server URLs | No - safe to share |
+
+### Pre-configured MCP Servers
+
+| Server | URL | Purpose |
+|--------|-----|---------|
+| `atlassian` | `mcp.atlassian.com` | Jira, Confluence |
+| `figma` | `mcp.figma.com` | Design specs |
+
+### Syncing Auth Across Machines
+
+To use the same authentication on another machine:
+
+```bash
+# On original machine - backup credentials
+cp ~/.claude/.credentials.json ~/safe-backup/
+
+# On new machine - after running setup.sh
+cp ~/safe-backup/.credentials.json ~/.claude/
+```
+
+**Note:** Credentials file is gitignored and should NEVER be committed.
+
 ## Troubleshooting
 
 ### Skills Not Working
@@ -218,8 +279,20 @@ git pull
 ### MCP Not Connecting
 
 1. Run `/mcp` to check status
-2. Re-authenticate if needed
-3. Verify network connectivity
+2. Check if tokens exist: `ls ~/.claude/.credentials.json`
+3. If expired, re-authenticate: `/mcp` → click server → OAuth
+4. Verify network connectivity
+
+### MCP Token Expired
+
+Tokens auto-refresh, but if issues occur:
+```bash
+# Check token status
+/mcp
+
+# If server shows "Not authenticated", click to re-auth
+# This is rare - tokens typically auto-refresh
+```
 
 ### Memory Not Loading
 

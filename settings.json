@@ -2,11 +2,28 @@
   "_comment": "User-level settings - applies to all projects",
 
   "enabledPlugins": {
+    "_comment": "Official plugins provide MCP servers with persistent OAuth authentication",
     "feature-forge@claude-team-plugins": true,
     "pr-review-toolkit@claude-plugins-official": true,
     "github@claude-plugins-official": true,
     "atlassian@claude-plugins-official": true,
     "figma@claude-plugins-official": true
+  },
+
+  "mcpServers": {
+    "_comment": "User-level MCP servers - available in ALL projects, authenticate once",
+
+    "atlassian": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v1/mcp",
+      "_note": "Authenticate once with /mcp, tokens auto-refresh"
+    },
+
+    "figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp",
+      "_note": "Authenticate once with /mcp, tokens auto-refresh"
+    }
   },
 
   "permissions": {
