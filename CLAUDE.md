@@ -51,12 +51,8 @@ Full-stack developer with frontend focus. Working across multiple React/Vue proj
 
 ## Jira Configuration
 
-**Cloud ID:** `a1b2c3d4-5678-90ab-cdef-1234567890ab`
-_Update this with your actual Jira cloud ID. Find it by running:_
-```
-/mcp
-# Then use getAccessibleAtlassianResources
-```
+**Cloud ID:** `3def4f78-101d-4614-9b65-735c17a98a93`
+**Site:** lambdatest.atlassian.net
 
 **Ticket Formats:**
 - `TTN-XXXXX` - Main project tickets

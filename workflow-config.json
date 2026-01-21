@@ -88,7 +88,7 @@
     },
 
     "jira": {
-      "cloud_id": "YOUR_CLOUD_ID_HERE",
+      "cloud_id": "3def4f78-101d-4614-9b65-735c17a98a93",
       "_cloud_id_instructions": "Run: claude mcp then use getAccessibleAtlassianResources to find your cloudId",
       "fields_to_fetch": [
         "summary", "description", "issuetype", "status",
