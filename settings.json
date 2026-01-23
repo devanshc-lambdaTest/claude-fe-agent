@@ -2,7 +2,6 @@
   "enabledPlugins": {
     "feature-forge@claude-team-plugins": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
     "atlassian@claude-plugins-official": true,
     "figma@claude-plugins-official": true
   },
@@ -16,11 +15,6 @@
     "figma": {
       "type": "http",
       "url": "https://mcp.figma.com/mcp"
-    },
-
-    "github": {
-      "type": "http",
-      "url": "https://mcp.github.com/v1/mcp"
     }
   },
 
