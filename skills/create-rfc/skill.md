@@ -1,11 +1,11 @@
 ---
 name: create-rfc
 description: Create RFC (Request for Comments) documents from JIRA tickets and code changes. Generates standardized RFC following LambdaTest SDLC process for automatic JIRA ticket creation.
-allowed-tools: Read, Write, Bash, AskUserQuestion, Task, Glob, Grep, WebFetch, mcp__plugin_atlassian_atlassian__getJiraIssue
+allowed-tools: Read, Write, Bash, AskUserQuestion, Task, TaskOutput, Glob, Grep, WebFetch, mcp__plugin_atlassian_atlassian__getJiraIssue
 ---
 
 # Create RFC Skill
-`
+
 ## Purpose
 
 Generate standardized RFC (Request for Comments) documents from JIRA tickets and code changes. The RFC follows LambdaTest's SDLC process and enables automatic JIRA ticket creation when merged.
@@ -20,14 +20,15 @@ Generate standardized RFC (Request for Comments) documents from JIRA tickets and
 - `/create-rfc` - Create RFC manually (will ask for details)
 - `/create-rfc --from-pr <PR-URL>` - Create RFC from existing PR
 - `/create-rfc --validate <path>` - Validate existing RFC file
+- `/create-rfc --skip-phases` - Skip Phases 1-4 and go directly to RFC collection (legacy mode)
 
 ### Examples
 
 ```bash
-# Create RFC from JIRA ticket
+# Create RFC from JIRA ticket (runs Phases 1-4 first)
 /create-rfc TE-1812
 
-# Create RFC manually
+# Create RFC manually (runs Phases 1-4 first)
 /create-rfc
 
 # Create from PR (extracts changes and JIRA info)
@@ -35,6 +36,9 @@ Generate standardized RFC (Request for Comments) documents from JIRA tickets and
 
 # Validate RFC before PR
 /create-rfc --validate docs/Features-RFC/my-feature.md
+
+# Skip phases, go straight to RFC (legacy behavior)
+/create-rfc --skip-phases TE-1812
 ```
 
 ---
@@ -74,65 +78,240 @@ The following fields are **mandatory** for the automation to work:
 
 ---
 
+## Workflow Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          CREATE-RFC WORKFLOW                                │
+│                                                                             │
+│   Phase 1: Gather Requirements    → /gather-requirements                   │
+│   Phase 2: Explore Codebase       → /explore-codebase                      │
+│   Phase 3: Decide Approach        → /decide-approach                       │
+│   Phase 4: Plan Implementation    → /plan-implementation                   │
+│                                                                             │
+│   ──────────── Phase outputs feed into RFC generation ────────────         │
+│                                                                             │
+│   Step 5: Determine RFC Type                                                │
+│   Step 6: Collect RFC-Specific Information                                  │
+│   Step 7: Check Infrastructure Requirements                                │
+│   Step 8: Generate RFC Document                                             │
+│   Step 9: Validate RFC                                                      │
+│   Step 10: Present Summary                                                  │
+│   Step 11: Offer Next Steps                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Why Phases 1-4 first?** The RFC quality depends heavily on deep understanding of the requirements, codebase, chosen approach, and implementation plan. Running these phases first ensures the RFC is grounded in actual codebase analysis rather than surface-level guesswork.
+
+---
+
 ## Workflow
 
-### Step 1: Determine Input Source
+### Phase 1: Gather Requirements (`/gather-requirements`)
 
-**If JIRA ID provided:**
+**Input:** JIRA ticket ID (if provided) or manual input
+**Output:** `.claude/workflow-state/requirements.json`
+
+Execute the `/gather-requirements` skill as-is. This phase:
+
+1. **Auto-detects project context** from `package.json`, `CLAUDE.md`, and directory structure
+2. **Fetches ticket details** from JIRA (using `mcp__plugin_atlassian_atlassian__getJiraIssue`) or GitHub Issues
+3. **Collects manual input** if no ticket provided (type, summary, description, acceptance criteria)
+4. **Extracts design links** (Figma URLs from ticket description/comments)
+5. **Correlates with codebase** (identifies likely affected directories)
+6. **Validates requirements** and saves to `requirements.json`
+7. **Presents summary and gets approval** before proceeding
+
+**If `--from-pr` was provided:**
+- Extract JIRA ID from PR title/body first
+- Get changed files using `gh pr diff`
+- Pass the JIRA ID into the gather-requirements flow
+- Store PR context (changed files, diff stats) alongside requirements
+
+**Phase transition:**
 ```
-/create-rfc TE-1812
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 1: GATHER REQUIREMENTS COMPLETE
+═══════════════════════════════════════════════════════════════════════════════
+Requirements gathered and approved. Proceeding to Phase 2: Explore Codebase.
 ```
 
-1. Fetch JIRA ticket using MCP:
+---
+
+### Phase 2: Explore Codebase (`/explore-codebase`)
+
+**Input:** `requirements.json` from Phase 1
+**Output:** `.claude/workflow-state/exploration.json`
+
+Execute the `/explore-codebase` skill as-is. This phase:
+
+1. **Checks for project memory** (from `/remember`) - uses fast path if cached
+2. **Launches 3 parallel exploration agents:**
+   - Agent 1: Similar Features Explorer
+   - Agent 2: Architecture & Flow Explorer
+   - Agent 3: Patterns & Conventions Explorer
+3. **Combines and deduplicates** key files from all agents
+4. **Reads key files** (up to ~20 most important)
+5. **Synthesizes findings** into comprehensive summary
+6. **Presents and gets approval** before proceeding
+
+**RFC value:** This phase identifies affected services, existing patterns, architecture layers, and integration points - all critical for RFC Sections 4, 5, 7.
+
+**Phase transition:**
+```
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 2: CODEBASE EXPLORATION COMPLETE
+═══════════════════════════════════════════════════════════════════════════════
+Codebase explored. Proceeding to Phase 3: Decide Approach.
+```
+
+---
+
+### Phase 3: Decide Approach (`/decide-approach`)
+
+**Input:** `requirements.json`, `exploration.json`
+**Output:** `.claude/workflow-state/approach.json`
+
+Present 2-3 implementation approaches based on the codebase exploration:
+
+1. **Analyze exploration results** to identify viable approaches
+2. **For each approach, evaluate:**
+   - Alignment with existing patterns (from exploration)
+   - Complexity and risk
+   - Maintainability
+   - Testing ease
+   - Affected services and scope
+3. **Present approaches to user** with trade-offs:
    ```
-   mcp__plugin_atlassian_atlassian__getJiraIssue
-   cloudId: 3def4f78-101d-4614-9b65-735c17a98a93
-   issueIdOrKey: TE-1812
+   question: "Which approach should we take?"
+   header: "Approach"
+   options:
+     - label: "Approach A: [name]"
+       description: "[brief summary with trade-offs]"
+     - label: "Approach B: [name]"
+       description: "[brief summary with trade-offs]"
+     - label: "Approach C: [name]"
+       description: "[brief summary with trade-offs]"
+   ```
+4. **Save chosen approach** to `approach.json`:
+   ```json
+   {
+     "metadata": {
+       "workflow_id": "<from requirements>",
+       "phase": 3,
+       "created_at": "<timestamp>"
+     },
+     "chosen_approach": {
+       "name": "<approach name>",
+       "description": "<detailed description>",
+       "rationale": "<why this was chosen>",
+       "patterns_to_follow": ["<from exploration>"],
+       "affected_services": ["<identified services>"],
+       "risks": ["<identified risks>"],
+       "mitigations": ["<risk mitigations>"]
+     },
+     "alternatives_considered": [
+       {
+         "name": "<name>",
+         "description": "<description>",
+         "rejected_reason": "<why not chosen>"
+       }
+     ],
+     "phase_status": {
+       "status": "approved",
+       "next_phase": "plan_implementation"
+     }
+   }
    ```
 
-2. Extract from ticket:
-   - Summary
-   - Description
-   - Issue type (Bug/Task/Story)
-   - Priority
-   - Labels
-   - Components
-   - Attachments (design links, screenshots)
+**RFC value:** This phase determines the solution design, alternatives considered, and risk analysis - directly feeds RFC Sections 3, 4, 7.
 
-**If --from-pr provided:**
-1. Extract JIRA ID from PR title/body
-2. Get changed files using `gh pr diff`
-3. Analyze code changes for context
+**Phase transition:**
+```
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 3: APPROACH DECIDED
+═══════════════════════════════════════════════════════════════════════════════
+Approach approved. Proceeding to Phase 4: Plan Implementation.
+```
 
-**If manual mode:**
-1. Ask for JIRA ticket ID (required)
-2. Ask for feature/bug description
-3. Ask for affected services
+---
 
-### Step 2: Analyze Code Changes (If PR or Recent Changes)
+### Phase 4: Plan Implementation (`/plan-implementation`)
 
-If working from a PR or recent git changes:
+**Input:** `requirements.json`, `exploration.json`, `approach.json`
+**Output:** `.claude/workflow-state/plan.json`
 
-1. **Get changed files:**
-   ```bash
-   git diff --name-only HEAD~1
-   # OR
-   gh pr diff <pr-number> --name-only
+Create a step-by-step implementation plan:
+
+1. **Break down the chosen approach** into ordered implementation steps
+2. **For each step, specify:**
+   - Files to create/modify/delete
+   - What changes to make
+   - Dependencies on other steps
+   - Estimated effort (2h, 4h, 6h, 8h increments)
+3. **Group by service** (maps directly to RFC microservices table)
+4. **Include test plan** per step
+5. **Present plan to user** for approval
+6. **Save plan** to `plan.json`:
+   ```json
+   {
+     "metadata": {
+       "workflow_id": "<from requirements>",
+       "phase": 4,
+       "created_at": "<timestamp>"
+     },
+     "implementation_plan": {
+       "steps": [
+         {
+           "step_number": 1,
+           "title": "<step title>",
+           "service": "<service name>",
+           "files": {
+             "create": ["<paths>"],
+             "modify": ["<paths>"],
+             "delete": ["<paths>"]
+           },
+           "description": "<what to do>",
+           "estimated_hours": 4,
+           "dependencies": []
+         }
+       ],
+       "total_estimated_hours": "<sum>",
+       "services_summary": [
+         {
+           "service": "<name>",
+           "hours": "<sum for this service>",
+           "steps": ["<step numbers>"]
+         }
+       ]
+     },
+     "test_plan": {
+       "unit_tests": ["<what to test>"],
+       "integration_tests": ["<what to test>"],
+       "e2e_tests": ["<what to test>"]
+     },
+     "phase_status": {
+       "status": "approved",
+       "next_phase": "generate_rfc"
+     }
+   }
    ```
 
-2. **Identify affected services:**
-   - Parse file paths to determine services
-   - Frontend apps: `apps/hyperexecute`, `apps/mobile-web-client`, etc.
-   - Backend services: service names from paths
+**RFC value:** This phase produces the implementation plan, service-wise effort estimates, test strategy, and file change list - directly feeds RFC Sections 5, 6, 9, 12.
 
-3. **Analyze change complexity:**
-   - Count files changed
-   - Count lines added/removed
-   - Identify patterns (bug fix, new feature, refactor)
+**Phase transition:**
+```
+═══════════════════════════════════════════════════════════════════════════════
+PHASE 4: IMPLEMENTATION PLAN COMPLETE
+═══════════════════════════════════════════════════════════════════════════════
+Plan approved. All phase data collected. Now generating RFC document.
+```
 
-### Step 3: Determine RFC Type
+---
 
-Ask user to confirm type:
+### Step 5: Determine RFC Type
+
+**Auto-detect from Phase 1 requirements** (type field from `requirements.json`), but confirm with user:
 
 ```
 question: "What type of change is this?"
@@ -146,72 +325,43 @@ options:
     description: "Improving existing functionality (refactor, tech debt, UX)"
 ```
 
-### Step 4: Collect Required Information
+### Step 6: Collect RFC-Specific Information
+
+**Use data from Phases 1-4 to pre-fill, then collect any remaining gaps.**
 
 **For Bug Fixes (RCA required):**
-```
-question: "What was the root cause?"
-header: "Root Cause"
-options:
-  - label: "I'll describe it"
-    description: "Provide root cause analysis"
-```
-
-Then ask:
-- Root cause description (use 5 Whys if possible)
+- Pre-fill root cause from Phase 2 exploration (code analysis) and Phase 3 approach
+- Ask user to confirm/refine:
+  ```
+  question: "Based on codebase analysis, here's the likely root cause: [auto-detected]. Is this correct?"
+  header: "Root Cause"
+  options:
+    - label: "Yes, that's correct"
+      description: "Use the detected root cause"
+    - label: "I'll refine it"
+      description: "Modify the root cause analysis"
+  ```
 - Customer impact description
 
 **For Features/Enhancements:**
-```
-question: "What problem are we solving?"
-header: "Problem"
-options:
-  - label: "I'll describe it"
-    description: "Provide problem statement"
-```
+- Pre-fill problem statement from Phase 1 requirements
+- Pre-fill solution design from Phase 3 approach
+- Ask for success metrics (optional)
 
-Then ask:
-- Problem statement
-- Success metrics (optional)
-
-### Step 5: Determine Services and Effort
-
-**Auto-detect from code changes if available:**
-- Parse file paths
-- Map to service names
-- Estimate based on change size
-
-**Or ask user:**
-```
-question: "What services are affected?"
-header: "Services"
-options:
-  - label: "Frontend only"
-    description: "hyperexecute-frontend, mobile-web-client, etc."
-  - label: "Backend only"
-    description: "API services"
-  - label: "Full stack"
-    description: "Both frontend and backend"
-```
-
-**Effort estimation:**
-```
-question: "What is the estimated dev effort?"
-header: "Effort"
-options:
-  - label: "2 hours"
-    description: "Quick fix"
-  - label: "4 hours"
-    description: "Small change"
-  - label: "8 hours"
-    description: "Medium change"
-  - label: "Other"
-    description: "I'll specify"
-```
+**Services and Effort (auto-filled from Phase 4):**
+- Service list and effort breakdown come directly from `plan.json` → `services_summary`
+- Present for confirmation:
+  ```
+  Based on the implementation plan:
+  - <service-1>: Xh
+  - <service-2>: Xh
+  Total: XXh
+  ```
+- Only ask if plan.json has no service breakdown
 
 > **Note:** Valid estimates per service: 2h, 4h, 6h, 8h. Services >8h are auto-split into chunks.
 
-### Step 6: Check Infrastructure Requirements
+### Step 7: Check Infrastructure Requirements
 
 ```
 question: "Does this require DevOps/Infrastructure changes?"
@@ -225,33 +375,37 @@ options:
 
 If yes, collect details for Section 8.
 
-### Step 7: Generate RFC Document
+### Step 8: Generate RFC Document
 
 1. **Create RFC file:**
    ```bash
    cp docs/Features-RFC/TEMPLATE.md docs/Features-RFC/<ticket-id>-<feature-name>.md
    ```
 
-2. **Fill in all sections:**
-   - Section 1: Basic Information (author, date, JIRA link)
-   - Section 2: Classification (Bug/Feature/Enhancement)
-   - Section 3: Context (RCA for bugs, Problem for features)
-   - Section 4: Solution Design (architecture, technical details)
-   - Section 5: Microservices Affected (table)
-   - Section 6: Dev Effort Estimates (total + breakdown)
-   - Section 7: Impact Analysis (layers, on-prem)
-   - Section 8: DevOps & Infrastructure
-   - Section 9: QA Strategy
-   - Section 10: Rollout Strategy
-   - Section 11: Sign-Offs (TBD placeholders)
-   - Section 12: Additional Notes (PR link, files changed)
+2. **Fill in all sections using Phase 1-4 data:**
+
+   | RFC Section | Source |
+   |-------------|--------|
+   | Section 1: Basic Information | Phase 1 `requirements.json` (ticket ID, author, date) |
+   | Section 2: Classification | Step 5 (confirmed type) |
+   | Section 3: Context & Problem | Phase 1 (requirements) + Phase 2 (root cause from exploration) |
+   | Section 4: Solution Design | Phase 3 `approach.json` (chosen approach, rationale, architecture) |
+   | Section 5: Microservices Affected | Phase 4 `plan.json` → `services_summary` |
+   | Section 6: Dev Effort Estimates | Phase 4 `plan.json` → `total_estimated_hours` + per-service |
+   | Section 7: Impact Analysis | Phase 2 `exploration.json` (architecture layers, integration points) |
+   | Section 8: DevOps & Infrastructure | Step 7 (user input) |
+   | Section 9: QA Strategy | Phase 4 `plan.json` → `test_plan` |
+   | Section 10: Rollout Strategy | Phase 3 `approach.json` → risks/mitigations |
+   | Section 11: Sign-Offs | TBD placeholders |
+   | Section 12: Additional Notes | Phase 4 (file change list), PR link if available |
 
 3. **Add code context:**
-   - Include before/after code snippets for bug fixes
-   - Include architecture diagrams (mermaid) for features
+   - Include before/after code snippets for bug fixes (from Phase 2 key files)
+   - Include architecture diagrams (mermaid) for features (from Phase 2 architecture)
    - Link to PR if available
+   - Include alternatives considered (from Phase 3)
 
-### Step 8: Validate RFC
+### Step 9: Validate RFC
 
 Run validation to ensure required fields are present:
 
@@ -265,7 +419,7 @@ Check for:
 - [ ] Total dev effort is specified
 - [ ] No TODO placeholders in required fields
 
-### Step 9: Present Summary
+### Step 10: Present Summary
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
@@ -279,11 +433,21 @@ RFC CREATED
 ## Summary
 <brief description>
 
+## Approach
+<chosen approach from Phase 3>
+
 ## Services Affected
 - <service-1> (Xh)
 - <service-2> (Xh)
 
 ## Total Effort: XX hours
+
+## Phases Completed
+- [x] Phase 1: Gather Requirements
+- [x] Phase 2: Explore Codebase
+- [x] Phase 3: Decide Approach
+- [x] Phase 4: Plan Implementation
+- [x] RFC Document Generated
 
 ## What Happens Next
 
@@ -309,7 +473,7 @@ git push origin rfc/<ticket-id>
 gh pr create --base master
 ```
 
-### Step 10: Offer Next Steps
+### Step 11: Offer Next Steps
 
 ```
 question: "What would you like to do next?"
@@ -539,10 +703,11 @@ Auto-extracts:
 
 | Command | Description |
 |---------|-------------|
-| `/create-rfc <JIRA-ID>` | Create RFC from JIRA ticket |
-| `/create-rfc` | Create RFC manually |
+| `/create-rfc <JIRA-ID>` | Create RFC from JIRA ticket (runs Phases 1-4 first) |
+| `/create-rfc` | Create RFC manually (runs Phases 1-4 first) |
 | `/create-rfc --from-pr <url>` | Create RFC from PR |
 | `/create-rfc --validate <path>` | Validate RFC file |
+| `/create-rfc --skip-phases` | Skip Phases 1-4, go directly to RFC collection |
 
 ---
 

@@ -69,14 +69,41 @@ claude mcp list
 
 ## Skills
 
-| Skill                   | Description                                  |
-| ----------------------- | -------------------------------------------- |
-| `/remember`             | Cache project context for instant loading    |
-| `/implement`            | Full 7-phase implementation workflow         |
-| `/gather-requirements`  | Fetch requirements from Jira/GitHub          |
-| `/explore-codebase`     | Deep codebase analysis (memory-aware)        |
-| `/design-to-code`       | Convert Figma designs to code                |
-| `/bulk-update-packages` | Update npm packages across multiple FE repos |
+| Skill | Description |
+| --- | --- |
+| `/remember` | Scans and caches project context (tech stack, structure, patterns) so future sessions load instantly instead of re-analyzing. |
+| `/implement` | End-to-end 7-phase implementation orchestrator — from gathering requirements to validated code, with approval gates between each phase. |
+| `/gather-requirements` | Phase 1 of implement — fetches ticket details from Jira/GitHub, auto-detects project context, and structures requirements into `requirements.json`. |
+| `/explore-codebase` | Phase 2 of implement — launches 3 parallel agents to find similar features, map architecture, and identify patterns/conventions. Memory-aware (fast path if `/remember` was run). |
+| `/create-rfc` | Generates a standardized RFC document by running Phases 1-4 (gather requirements, explore codebase, decide approach, plan implementation) first, then producing the RFC with all sections auto-filled from phase outputs. Supports `--from-pr` and `--skip-phases` flags. |
+| `/design-to-code` | Converts Figma designs into production-ready code components, auto-detecting the project's framework and component libraries. |
+| `/bulk-update-packages` | Updates a shared npm package across multiple frontend repos in one go — forks, syncs, updates `package.json`, and opens PRs automatically. |
+
+### Atlassian Plugin Skills
+
+| Skill | Description |
+| --- | --- |
+| `/triage-issue` | Searches Jira for duplicate/similar issues before creating a new bug ticket, and offers to add comments to existing ones. |
+| `/capture-tasks-from-meeting-notes` | Parses meeting notes or Confluence pages to extract action items, looks up assignee account IDs, and creates Jira tasks. |
+| `/generate-status-report` | Queries Jira issues for a project, categorizes by status/priority, and publishes a formatted status report to Confluence. |
+| `/search-company-knowledge` | Searches across Confluence, Jira, and internal docs in parallel to find and explain internal concepts, processes, and technical details. |
+| `/spec-to-backlog` | Reads a Confluence spec page, breaks it into Epics and implementation tickets, and creates them in Jira with proper linking. |
+
+### Figma Plugin Skills
+
+| Skill | Description |
+| --- | --- |
+| `/implement-design` | Translates Figma designs into production-ready code with 1:1 visual fidelity, using Figma MCP for design context. |
+| `/code-connect-components` | Maps Figma design components to code components using Code Connect, establishing design-to-code traceability. |
+| `/create-design-system-rules` | Generates project-specific design system rules and conventions for consistent Figma-to-code workflows. |
+
+### PR Review Toolkit
+
+| Skill | Description |
+| --- | --- |
+| `/review-pr` | Comprehensive PR review using specialized agents for code quality, silent failures, type design, test coverage, and comment accuracy. |
+
+---
 
 ### `/bulk-update-packages`
 
@@ -131,6 +158,7 @@ claude-fe-agent/
 │   ├── explore-codebase/
 │   ├── design-to-code/
 │   ├── implement/
+│   ├── create-rfc/
 │   └── bulk-update-packages/
 ├── agents/
 │   └── code-reviewer.md
