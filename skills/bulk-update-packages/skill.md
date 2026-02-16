@@ -67,24 +67,76 @@ Update common npm packages across multiple frontend repositories **using `gh` CL
 ```json
 {
   "owner": "LambdatestIncPrivate",
-  "repos": [
-    {
-      "name": "mobile-web-client",
-      "base_branch": "stage"
-    },
-    {
-      "name": "accessibility-testing-chrome-extension",
-      "base_branch": "stage"
-    },
-    {
-      "name": "dotlapse-frontend",
-      "base_branch": "stage"
-    }
-  ]
+  "teams": {
+    "Application": [
+      {
+        "name": "LWC-2.0",
+        "base_branch": "stage",
+        "alias": "Falcon"
+      },
+      {
+        "name": "mobile-web-client",
+        "base_branch": "stage",
+        "alias": "Mobile"
+      },
+      {
+        "name": "hyperexecute-dashboard",
+        "base_branch": "stage",
+        "alias": "HyEx"
+      },
+      {
+        "name": "kaneai-test-management-client",
+        "base_branch": "stage",
+        "alias": "Kane + Test Manager"
+      },
+      {
+        "name": "lt-web-platform",
+        "base_branch": "stage",
+        "alias": "MonoRepo"
+      },
+      {
+        "name": "dotlapse-frontend",
+        "base_branch": "stage",
+        "alias": "Smart UI"
+      },
+      {
+        "name": "accessibility-testing-chrome-extension",
+        "base_branch": "stage",
+        "alias": "Accessibility"
+      },
+      {
+        "name": "web-scanner-client",
+        "base_branch": "stage",
+        "alias": "Web Scanner"
+      }
+    ],
+    "Enterprise": [
+      {
+        "name": "lambda-invigilator-client",
+        "base_branch": "stage",
+        "alias": "Accounts"
+      },
+      {
+        "name": "lambda-ledger-client",
+        "base_branch": "stage",
+        "alias": "Billing"
+      },
+      {
+        "name": "lambda-integration-client",
+        "base_branch": "stage",
+        "alias": "Integrations"
+      },
+      {
+        "name": "analytics",
+        "base_branch": "stage",
+        "alias": "Analytics"
+      }
+    ]
+  }
 }
 ```
 
-> **Note:** Update the repos list as needed. All operations happen via `gh` CLI.
+> **Note:** Update the repos list as needed. All operations happen via `gh` CLI. Repos are organized by team for tracking purposes but all are processed together during bulk updates.
 
 ### Common Packages to Update
 
