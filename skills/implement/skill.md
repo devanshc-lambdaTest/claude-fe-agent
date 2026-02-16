@@ -17,10 +17,11 @@ End-to-end feature implementation orchestrator. Works with any frontend project 
 Phase 1: Gather Requirements    → /gather-requirements
 Phase 2: Explore Codebase       → /explore-codebase
 Phase 3: Decide Approach        → /decide-approach
-Phase 4: Plan Implementation    → /plan-implementation
-Phase 5: Setup Tests (TDD)      → /setup-tests
-Phase 6: Execute Implementation → /execute-implementation
-Phase 7: Validate & Finalize    → /validate-implementation
+Phase 4: Create RFC             → /create-rfc
+Phase 5: Plan Implementation    → /plan-implementation
+Phase 6: Setup Tests (TDD)      → /setup-tests
+Phase 7: Execute Implementation → /execute-implementation
+Phase 8: Validate & Finalize    → /validate-implementation
 ```
 
 ---
@@ -97,7 +98,7 @@ Before moving to next phase:
 
 ## Phase Execution
 
-### For each phase (1-7):
+### For each phase (1-8):
 
 1. **Announce phase**
    ```
@@ -142,23 +143,30 @@ Before moving to next phase:
 - **Output:** `approach.json`
 - **Presents:** 2-3 implementation approaches
 
-### Phase 4: Plan Implementation
+### Phase 4: Create RFC
+- **Input:** `requirements.json`, `exploration.json`, `approach.json`
+- **Output:** `rfc.json`, RFC markdown file, PR in `LambdatestIncPrivate/internal-docs`
+- **Creates:** RFC document following the official LambdaTest RFC template
+- **PR Target:** `LambdatestIncPrivate/internal-docs` repo (not the current project repo)
+- **Skippable:** User can choose to skip if RFC is not needed
+
+### Phase 5: Plan Implementation
 - **Input:** Previous outputs
 - **Output:** `plan.json`
 - **Creates:** Step-by-step implementation plan
 
-### Phase 5: Setup Tests (TDD)
+### Phase 6: Setup Tests (TDD)
 - **Input:** `requirements.json`, `plan.json`
 - **Output:** `test-baseline.json`, test files
 - **Auto-detects:** Test framework, test directory
 - **CRITICAL:** Tests must FAIL before implementation
 
-### Phase 6: Execute Implementation
+### Phase 7: Execute Implementation
 - **Input:** `plan.json`, `test-baseline.json`
 - **Output:** `execution-log.json`, modified code
 - **Goal:** Make tests pass
 
-### Phase 7: Validate & Finalize
+### Phase 8: Validate & Finalize
 - **Input:** All previous outputs
 - **Output:** Validation report
 - **Runs:** All tests, linter, type-check (if applicable)
@@ -179,7 +187,7 @@ When all phases complete:
 **Framework:** [detected]
 
 ### Phases Completed:
-- [✅] All 7 phases
+- [✅] All 8 phases
 
 ### Files Changed:
 - [list]
@@ -223,7 +231,8 @@ Phase History:
   [✅] Phase 1: Gather Requirements
   [✅] Phase 2: Explore Codebase
   [🔄] Phase 3: Decide Approach (in progress)
-  [⏳] Phase 4-7: Pending
+  [⏳] Phase 4: Create RFC
+  [⏳] Phase 5-8: Pending
 
 Commands:
   /implement --resume    Continue

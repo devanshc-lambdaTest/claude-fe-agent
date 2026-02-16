@@ -141,14 +141,24 @@
     ]
   },
 
-  "phase4_planning": {
+  "phase4_rfc": {
+    "require_user_approval": true,
+    "skippable": true,
+    "template_source": "LambdatestIncPrivate/internal-docs/docs/Features-RFC/TEMPLATE.md",
+    "target_repo": "LambdatestIncPrivate/internal-docs",
+    "rfc_directory": "docs/Features-RFC",
+    "branch_prefix": "rfc/",
+    "auto_populate_from_previous_phases": true
+  },
+
+  "phase5_planning": {
     "require_user_approval": true,
     "include_test_plan": true,
     "estimate_impact": true,
     "categorize_changes": ["create", "modify", "delete"]
   },
 
-  "phase5_testing": {
+  "phase6_testing": {
     "auto_detect_test_framework": true,
     "test_framework_detection": {
       "jest": ["jest", "@jest/core"],
@@ -163,14 +173,14 @@
     "tdd_enforcement": true
   },
 
-  "phase6_execution": {
+  "phase7_execution": {
     "max_iterations": 10,
     "commit_after_each_step": false,
     "run_tests_after_each_change": true,
     "rollback_on_failure": true
   },
 
-  "phase7_validation": {
+  "phase8_validation": {
     "lint_check": true,
     "type_check": "auto-detect",
     "bundle_analysis": false,
